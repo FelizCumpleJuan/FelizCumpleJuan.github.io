@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>¡Feliz Cumple Juan!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        @keyframes terminal-glitch {
+            0% { text-shadow: 0 0 10px #0ff; }
+            50% { text-shadow: 2px 2px 5px #f0f; }
+            100% { text-shadow: -2px -2px 5px #0ff; }
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .hacker-text {
+            animation: terminal-glitch 1.5s infinite;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .cert-badge {
+            background: linear-gradient(45deg, #0f9d58 0%, #00c853 100%);
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 15px #00ff0055;
+        }
+
+        .loading-bar {
+            height: 4px;
+            background: linear-gradient(90deg, #00ff00 0%, #0ff 100%);
+            transition: width 0.3s ease;
+        }
+        .cyber-modal {
+        background: linear-gradient(45deg, #001f3f, #003366);
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 20px #00ff0077;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 600px;
+        position: relative;
+    }
+
+    .cyber-text {
+        text-shadow: 0 0 10px #00ff00;
+        font-family: 'Courier New', monospace;
+    }
+
+    .cyber-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #ff0000;
+        border: 1px solid #00ff00;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .scan-modal {
+        background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+        border: 2px solid #00ff00;
+        box-shadow: 0 0 20px #00ff0077;
+        border-radius: 8px;
+        padding: 2rem;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .scan-progress {
+        height: 20px;
+        background: #333;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .scan-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff00, #00cc00);
+        width: 0;
+        transition: width 0.5s ease;
+    }
+
+    .scan-qr {
+        width: 200px;
+        height: 200px;
+        margin: 1rem auto;
+        border: 2px solid #00ff00;
+        padding: 10px;
+        background: white;
+    }
+
+    .hacker-consola {
+        font-family: 'Courier New', monospace;
+        color: #00ff00;
+        text-shadow: 0 0 10px #00ff00;
+    }
+
+    .certificate-container {
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .certificate-container:hover {
+        transform: scale(1.05) rotate(2deg);
+    }
+
+    .certificate-download {
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .certificate-container:hover .certificate-download {
+        opacity: 1;
+    }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-start min-h-screen p-6 space-y-8 bg-gray-900">
+    <!-- Matrix Rain Background -->
+    <canvas id="matrix" class="matrix-bg"></canvas>
+
+    <!-- Loading Bar -->
+    <div class="fixed top-0 left-0 w-full">
+        <div id="loading" class="loading-bar"></div>
+    </div>
+
+    <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-green-500 hacker-text">
+        ¡H4PPY B1RTHD4Y, JUA7! 🎉
+    </h1>
+
+    <!-- Interactive Terminal -->
+    <div class="relative group w-full max-w-2xl">
+        <pre id="terminal" class="bg-black p-4 rounded-lg h-64 overflow-auto border-2 border-cyan-500 font-mono text-green-400"></pre>
+        <div class="absolute bottom-2 right-4 text-cyan-300 text-sm">root@juan-birthday:~</div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="grid grid-cols-2 gap-4 w-full max-w-xl">
+        <button id="btnConfetti" 
+                class="px-6 py-3 bg-cyan-600 rounded-lg hover:bg-cyan-500 transition border-2 border-cyan-400 hacker-text">
+            🚀 DEPLOY_CELEBRATION_PROTOCOL
+        </button>
+        <button id="btnScan" 
+                class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-500 transition border-2 border-purple-400 hacker-text">
+            🔍 SCAN_FOR_CAKE
+        </button>
+    </div>
+
+    <!-- Interactive Architecture Diagram -->
+    <div class="relative group w-full max-w-4xl">
+        <img src="aws-diagram.drawio.svg" alt="Arquitectura AWS" 
+             class="rounded-lg border-2 border-cyan-500 transform hover:scale-105 transition-transform"/>
+        <div class="absolute inset-0 flex items-center justify-center space-x-4">
+            <div class="tooltip" data-component="EC2">🎂</div>
+            <div class="tooltip" data-component="S3">🎁</div>
+            <div class="tooltip" data-component="Lambda">🎈</div>
+        </div>
+    </div>
+
+    <!-- Code Editor Section -->
+    <div class="w-full max-w-2xl bg-gray-800 p-4 rounded-lg font-mono">
+        <div class="flex items-center mb-2">
+            <div class="h-3 w-3 bg-red-500 rounded-full mr-2"></div>
+            <div class="h-3 w-3 bg-yellow-500 rounded-full mr-2"></div>
+            <div class="h-3 w-3 bg-green-500 rounded-full"></div>
+            <span class="ml-4 text-gray-400">birthday_spec.js</span>
+        </div>
+        <pre class="text-green-400">
+function celebrateJuan() {
+    const juan = {
+        age: unknown,
+        skills: ['AWS', 'Cybersecurity', 'DevOps', 'Leadership'],
+        traits: {
+            intelligence: 'MAX',
+            humor: '+++',
+            dedication: '100%'
+        }
+    };
+    
+    while(juan.age < 100) {
+        juan.age++;
+        juan.skills.push('Experience++');
+        deployConfetti();
+    }
+}</pre>
+    </div>
+
+    <div class="certificate-container relative">
+        <div class="cert-badge px-8 py-4 rounded-full transform transition-transform"
+             onclick="generateCertificate()">
+            <span class="text-2xl">🎖️ Certified Cloud Birthday Engineer</span>
+            <div class="text-xs text-center mt-2">Validación: 2025-∞ | Emisor: AWS Birthday Committee</div>
+        </div>
+        <div class="certificate-download text-cyan-400">
+            CLICK PARA DESCARGAR CERTIFICADO
+        </div>
+    </div>
+    
+    <!-- Agrega este HTML oculto para el certificado -->
+    <div id="certificateTemplate" class="hidden">
+        <div class="bg-gray-900 p-8 rounded-xl w-[800px] h-[600px] relative border-4 border-cyan-500">
+            <div class="absolute inset-0 opacity-20" style="background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzAwMDAwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjIwIiBmaWxsPSIjMDBmZjAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIj5DSUJFUlNFQ1VSSUREQUQ8L3RleHQ+PC9zdmc+') repeat"></div>
+            
+            <div class="relative z-10 text-center h-full flex flex-col items-center justify-center">
+                <h1 class="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-green-400 bg-clip-text text-transparent">
+                    Certificado de Cumpleaños
+                </h1>
+                
+                <div class="mt-8 space-y-4">
+                    <p class="text-2xl text-gray-300">Se otorga a</p>
+                    <h2 class="text-4xl font-mono text-cyan-400">JUAN CHAHIN</h2>
+                    <p class="text-xl text-gray-400">por su excelencia en:</p>
+                    <ul class="text-green-400 list-disc list-inside">
+                        <li>Ser un gran padre</li>
+                        <li>Ingeniería de Cloud Security</li>
+                        <li>Defensa Cibernética</li>
+                        <li>Liderazgo Técnico</li>
+                    </ul>
+                </div>
+    
+                <div class="mt-8 flex items-center justify-center space-x-6">
+                    <div class="text-left">
+                        <p class="text-sm text-gray-400">Fecha: <span class="text-cyan-400" id="certDate"></span></p>
+                        <p class="text-sm text-gray-400">ID: <span class="text-green-400">#CH4H1N-2025</span></p>
+                    </div>
+                    <div class="w-32 h-32 border-4 border-cyan-500 rounded-full bg-gray-800 flex items-center justify-center">
+                        <span class="text-4xl">🎖️</span>
+                    </div>
+                </div>
+    
+                <div class="mt-6 text-xs text-gray-500">
+                    <p>Firmado digitalmente por: AWS Birthday Authority</p>
+                    <p>Hash de validación: 0xCH4H1N35B1R7HD4Y</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Easter Egg Terminal -->
+    <div id="easterEgg" class="fixed bottom-0 left-0 w-full bg-black p-4 hidden">
+        <div class="max-w-xl mx-auto">
+            <div class="text-green-400">root@birthday:~# <span id="typedCommand"></span><span class="cursor">_</span></div>
+        </div>
+    </div>
+
+    <div id="cyberModal" class="modal-overlay">
+        <div class="cyber-modal">
+            <div class="cyber-close" onclick="closeCyberModal()">X</div>
+            <div class="text-center space-y-4 cyber-text">
+                <h2 class="text-2xl font-bold text-green-400">🚨 DEFENSA ACTIVADA 🚨</h2>
+                <div class="text-lg">
+                    <p>> Protocolo de Celebración iniciado...</p>
+                    <p>> Defendiendo base de datos en la nube...</p>
+                    <p>> Firewalls: [██████████] 100%</p>
+                    <p>> Ciberataque neutralizado: [✅]</p>
+                    <p class="mt-4 text-cyan-300">Sistema seguro: Nivel 9000</p>
+                    <p class="text-xl mt-6">¡Gracias por confiar en nosotros, Ingeniero Juan!</p>
+                    <p class="text-2xl text-yellow-400">Feliz Cumpleaños</p>
+                    <p class="text-sm text-gray-400">// Security First, Celebration Always</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanModal" class="modal-overlay">
+        <div class="scan-modal">
+            <div class="cyber-close" onclick="closeScanModal()">X</div>
+            <div class="text-center space-y-4 hacker-consola">
+                <h2 class="text-2xl font-bold">🔍 INICIANDO ESCANEO DE PASTEL 🔍</h2>
+                
+                <div class="scan-progress">
+                    <div id="scanProgress" class="scan-progress-bar"></div>
+                    <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-white">
+                        <span id="scanPercentage">0%</span>
+                    </div>
+                </div>
+    
+                <div class="scan-qr">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=HappyBirthdayJuan!🍰" 
+                         alt="QR Seguridad" class="w-full h-full">
+                </div>
+    
+                <div id="scanMessages" class="text-left space-y-2">
+                    <p>> Inicializando módulo de escaneo...</p>
+                    <p>> Verificando integridad del pastel...</p>
+                    <p>> Analizando capas cibernéticas...</p>
+                    <p>> Buscando vulnerabilidades...</p>
+                    <p class="text-green-400 hidden" id="scanResult">✅ PASTEL LIBRE DE AMENAZAS</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Matrix Rain
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()';
+const drops = Array(Math.floor(canvas.width/10)).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0F0';
+    
+    drops.forEach((y, i) => {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i*10, y*10);
+        drops[i] = (y*10 > canvas.height && Math.random() > 0.975) ? 0 : y + 1;
+    });
+}
+setInterval(drawMatrix, 50);
+
+// Enhanced Terminal
+const termLines = [
+    '🎉 Iniciando sistema de celebración...',
+    '🔐 Autenticando con IAM...',
+    '✅ Usuario: juan_cumple autenticado',
+    '🚀 Desplegando recursos de fiesta en AWS...',
+    '🛡️ Activando medidas de seguridad...',
+    '🍰 Baking birthday cake en 3 capas...',
+    '📦 Empaquetando regalos en instancia t3.xlarge',
+    '🎁 Creando AutoScaling Group para sorpresas',
+    '🔥 Configurando Lambda@Edge para distribución global',
+    '🎊 Inicializando módulo de confetti...',
+    '💻 Ejecutando birthday.sh...',
+    '🎵 Iniciando playlist: Juan\'s Greatest Hits',
+    '🎉 ¡Sistema listo para celebrar!'
+];
+
+let termProgress = 0;
+const term = document.getElementById('terminal');
+const loading = document.getElementById('loading');
+
+function updateTerminal() {
+    if(termProgress < termLines.length) {
+        term.textContent += '$ ' + termLines[termProgress] + '\n';
+        term.scrollTop = term.scrollHeight;
+        loading.style.width = `${(termProgress/termLines.length)*100}%`;
+        termProgress++;
+        setTimeout(updateTerminal, Math.random() * 800 + 200);
+    } else {
+        loading.style.width = '100%';
+    }
+}
+updateTerminal();
+
+// Interactive Confetti
+document.getElementById('btnConfetti').addEventListener('click', () => {
+    const count = 200;
+    const defaults = { origin: { y: 0.7 } };
+    
+    function fire(particleRatio, opts) {
+        confetti(Object.assign({}, defaults, opts, {
+            particleCount: Math.floor(count * particileRatio),
+        }));
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+});
+
+// Easter Eggs
+document.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') {
+        document.getElementById('easterEgg').classList.toggle('hidden');
+    }
+});
+
+// Tooltips
+document.querySelectorAll('.tooltip').forEach(el => {
+    el.addEventListener('click', () => {
+        const component = el.dataset.component;
+        const messages = {
+            EC2: 'Instancia de pastel de 3 capas corriendo en us-east-1',
+            S3: 'Bucket de regalos con versionamiento activado',
+            Lambda: 'Función serverless para distribución de confetti'
+        };
+        alert(`[${component}] ${messages[component]}`);
+    });
+});
+
+ // Función para mostrar el modal
+ function showCyberModal() {
+        document.getElementById('cyberModal').style.display = 'flex';
+        // Efecto de confetti mejorado
+        const scalar = 2;
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            scalar: scalar
+        });
+        
+        // Efectos adicionales
+        setTimeout(() => {
+            confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+            confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 250);
+    }
+
+    // Función para cerrar el modal
+    function closeCyberModal() {
+        document.getElementById('cyberModal').style.display = 'none';
+    }
+
+    // Actualiza el event listener del botón
+    document.getElementById('btnConfetti').addEventListener('click', () => {
+        showCyberModal();
+        
+        // Agrega un log en la terminal
+        term.textContent += '$ 🛡️ Protocolo de defensa activado\n';
+        term.scrollTop = term.scrollHeight;
+    });
+
+    // Cerrar modal al hacer click fuera
+    document.getElementById('cyberModal').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('cyberModal')) {
+            closeCyberModal();
+        }
+    });
+
+     // Funciones para el escaneo
+     function startScan() {
+        document.getElementById('scanModal').style.display = 'flex';
+        const progressBar = document.getElementById('scanProgress');
+        const percentage = document.getElementById('scanPercentage');
+        const messages = document.getElementById('scanMessages').children;
+        const result = document.getElementById('scanResult');
+
+        // Resetear estado
+        progressBar.style.width = '0%';
+        percentage.textContent = '0%';
+        result.classList.add('hidden');
+        
+        // Simular progreso
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 3;
+            if(progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                
+                // Mostrar resultado final
+                setTimeout(() => {
+                    result.classList.remove('hidden');
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }, 500);
+            }
+            
+            progressBar.style.width = `${progress}%`;
+            percentage.textContent = `${Math.round(progress)}%`;
+            
+            // Actualizar mensajes
+            if(progress > 25) messages[1].classList.add('text-green-400');
+            if(progress > 50) messages[2].classList.add('text-yellow-400');
+            if(progress > 75) messages[3].classList.add('text-red-400');
+            
+        }, 200);
+    }
+
+    function closeScanModal() {
+        document.getElementById('scanModal').style.display = 'none';
+    }
+
+    // Actualizar event listener del botón SCAN
+    document.getElementById('btnScan').addEventListener('click', () => {
+        startScan();
+        
+        // Agregar logs en la terminal
+        term.textContent += '$ 🍰 Iniciando escaneo de pastel...\n';
+        term.textContent += '$ 🔍 Buscando amenazas cibernéticas...\n';
+        term.scrollTop = term.scrollHeight;
+    });
+
+    // Cerrar modal al hacer click fuera
+    document.getElementById('scanModal').addEventListener('click', (e) => {
+        if(e.target === document.getElementById('scanModal')) {
+            closeScanModal();
+        }
+    });
+
+    // Función para generar el certificado
+async function generateCertificate() {
+    // Crear elemento temporal
+    const template = document.getElementById('certificateTemplate').cloneNode(true);
+    template.classList.remove('hidden');
+    template.id = '';
+    document.body.appendChild(template);
+    
+    // Actualizar fecha
+    template.querySelector('#certDate').textContent = new Date().toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Generar PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', [297, 210]); // A4 landscape
+    
+    // Convertir a imagen
+    await html2canvas(template, { 
+        scale: 2,
+        backgroundColor: null
+    }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        doc.addImage(imgData, 'PNG', 10, 10, 280, 190);
+        doc.save('Certificado-Cumpleaños-Juan-Chahin.pdf');
+    });
+
+    // Limpiar
+    document.body.removeChild(template);
+    
+    // Agregar log en terminal
+    term.textContent += '$ 📜 Certificado descargado: validación exitosa\n';
+    term.scrollTop = term.scrollHeight;
+    
+    // Efecto de confetti
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.8 }
+    });
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
